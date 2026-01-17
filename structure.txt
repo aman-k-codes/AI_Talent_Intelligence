@@ -1,0 +1,12 @@
+AI Talent Intelligence - Project Structure 
+
+1. Convert PDF to Text the Resume
+    - Extract all information from resume raw data
+    - Store in Resume dictionary
+    
+2. Get Github link if available
+    - Get all data of candidate from github profile
+    - Extract all information from gihub raw api response
+    - Store in Github dictionary
+
+3. Present Data in website

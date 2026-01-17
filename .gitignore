@@ -1,0 +1,67 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# =========================
+# Virtual Environments
+# =========================
+venv/
+.env/
+env/
+.venv/
+
+# =========================
+# Jupyter Notebook
+# =========================
+.ipynb_checkpoints/
+*.ipynb~
+
+# =========================
+# AI / ML Artifacts
+# =========================
+models/
+checkpoints/
+logs/
+runs/
+wandb/
+
+# =========================
+# Data Files
+# =========================
+data/raw/
+data/processed/
+data/uploads/
+*.csv
+*.tsv
+*.xlsx
+*.json
+
+# =========================
+# spaCy / NLP
+# =========================
+.spacy/
+*.spacy
+
+# =========================
+# Flask / Web
+# =========================
+instance/
+*.log
+
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# =========================
+# Secrets
+# =========================
+*.env
+config_secret.py
