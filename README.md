@@ -42,7 +42,7 @@
 
 ### 1. Clone & Install Dependencies
 ```bash
-git clone [https://github.com/yourusername/AI_Talent_Intelligence.git](https://github.com/yourusername/AI_Talent_Intelligence.git)
+git clone [https://github.com/aman-k-codes/AI_Talent_Intelligence.git](https://github.com/aman-k-codes/AI_Talent_Intelligence.git)
 cd AI_Talent_Intelligence
 pip install pymupdf spacy requests
 python -m spacy download en_core_web_lg
