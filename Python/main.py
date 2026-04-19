@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import fitz  # PyMuPDF
 import spacy
@@ -14,6 +15,8 @@ except OSError:
 
 from spacy.matcher import PhraseMatcher
 from collections import Counter
+from resume_generator import generate_improved_content, generate_latex, compile_pdf
+import os
 
 # 1. Strong Stopword Filtering
 CUSTOM_STOPWORDS = {
@@ -186,6 +189,55 @@ async def calculate_ats_score(
             "improve": improve_suggestions
         }
     }
+
+@app.post("/generate-resume")
+async def generate_resume_endpoint(
+    resume: UploadFile = File(...),
+    job_description: str = Form(...)
+):
+    """
+    Parses the resume, runs ATS scoring, and returns a new AI-improved PDF and LaTeX code.
+    """
+    # 1. Run the same core scoring logic
+    ats_result = await calculate_ats_score(resume=resume, job_description=job_description)
+    
+    # Needs to re-read for text extraction because calculate_ats_score 
+    # consumes the stream but wait, we already have the resume text if we refactored
+    # For now, simply extract here again or use the same standard flow:
+    await resume.seek(0)
+    resume_bytes = await resume.read()
+    extracted_text = extract_text_from_pdf(resume_bytes)
+    
+    # 2. Extract Data
+    matched_keywords = ats_result["matched_keywords"]
+    missing_keywords = ats_result["missing_keywords"]
+    
+    # 3. Content Improvement
+    improved_content = generate_improved_content(extracted_text, missing_keywords, matched_keywords)
+    
+    # 4. Generate LaTeX
+    latex_code = generate_latex(improved_content)
+    
+    # 5. Compile PDF
+    pdf_path = compile_pdf(latex_code)
+    
+    download_url = f"/download-pdf?path={pdf_path}" if pdf_path else ""
+    
+    return {
+        "ats_score": ats_result["ats_score"],
+        "improved_resume_pdf": download_url,
+        "improved_resume_tex": latex_code
+    }
+
+@app.get("/download-pdf")
+async def download_pdf(path: str):
+    """Serves the generated PDF file."""
+    if not os.path.exists(path) or not path.endswith('.pdf'):
+        raise HTTPException(status_code=404, detail="PDF not found or invalid.")
+    
+    # Extract filename from path to present to user
+    filename = os.path.basename(path)
+    return FileResponse(path, media_type="application/pdf", filename=filename)
 
 if __name__ == "__main__":
     import uvicorn
