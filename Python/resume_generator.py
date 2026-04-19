@@ -102,23 +102,58 @@ def rewrite_bullets(text: str) -> str:
         
     return improved_text
 
-def generate_improved_content(extracted_text: str, missing_keywords: List[str], matched_keywords: List[str]) -> Dict[str, str]:
-    """Applies improvements to extracted sections."""
+from model_router import route_model_request
+
+async def generate_improved_content(extracted_text: str, missing_keywords: List[str], matched_keywords: List[str], model_tier: str = "premium") -> Dict[str, str]:
+    """Applies improvements to extracted sections utilizing LLM integration with heuristic fallback."""
     sections = extract_sections_heuristic(extracted_text)
     
-    # Process Skills
-    all_skills = matched_keywords + missing_keywords[:5]
-    sections["Skills"] = ", ".join([s.capitalize() for s in all_skills]) if all_skills else sections["Skills"]
+    prompt = f"""
+    You are optimizing a candidate's resume for an ATS system. 
+    Rewrite the following resume content to be more impactful. Do NOT hallucinate new experiences.
+    Incorporate these highly relevant missing domain keywords natively where they fit logically: {', '.join(missing_keywords[:5])}
     
-    # Process Summary
-    summary = sections.get("Summary", "")
-    summary = inject_keywords(summary, missing_keywords)
-    sections["Summary"] = summary
+    Original Extracted Resume Content:
+    {extracted_text[:3000]}
     
-    # Process Experience
-    exp = sections.get("Experience", "")
-    exp = rewrite_bullets(exp)
-    sections["Experience"] = exp
+    Return ONLY a JSON response strictly matching this structure with valid keys:
+    {{
+        "summary": "Rewritten summary...",
+        "skills": "Comma separated string of updated skills...",
+        "experience": "LaTeX formatted rewritten experience bullets...",
+        "projects": "LaTeX formatted rewritten project section..."
+    }}
+    """
+    
+    try:
+        # Use LLMs (GPT-4o or Groq)
+        llm_response = await route_model_request(prompt, model_tier)
+        
+        # Apply the structured LLM enhancements back onto our resume sections format
+        sections["Summary"] = llm_response.get("summary", sections["Summary"])
+        sections["Skills"] = llm_response.get("skills", sections["Skills"])
+        
+        ex = llm_response.get("experience")
+        if ex and len(ex.strip()) > 10:
+            sections["Experience"] = ex
+            
+        proj = llm_response.get("projects")
+        if proj and len(proj.strip()) > 10:
+            sections["Projects"] = proj
+            
+    except Exception as e:
+        print(f"LLM rewrite pipeline failed completely. Aborting to heuristic logic. Error: {e}")
+        # Standard Fallback logic using only heuristical strings & NLP (No LLM)
+        all_skills = matched_keywords + missing_keywords[:5]
+        sections["Skills"] = ", ".join([s.capitalize() for s in all_skills]) if all_skills else sections["Skills"]
+        
+        summary = sections.get("Summary", "")
+        summary = inject_keywords(summary, missing_keywords)
+        sections["Summary"] = summary
+        
+        exp = sections.get("Experience", "")
+        exp = rewrite_bullets(exp)
+        sections["Experience"] = exp
     
     return sections
 

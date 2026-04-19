@@ -4,3 +4,5 @@ python-multipart
 pydantic
 PyMuPDF
 spacy
+openai
+groq

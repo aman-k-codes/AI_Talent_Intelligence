@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, FileText, X } from "lucide-react";
+import { Upload, FileText, X, Sparkles } from "lucide-react";
 import clsx from "clsx";
 
 interface UploadFormProps {
@@ -8,6 +8,8 @@ interface UploadFormProps {
   setJobDescription: (jd: string) => void;
   file: File | null;
   setFile: (file: File | null) => void;
+  modelTier: string;
+  setModelTier: (tier: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   loading: boolean;
 }
@@ -17,6 +19,8 @@ export function UploadForm({
   setJobDescription,
   file,
   setFile,
+  modelTier,
+  setModelTier,
   onSubmit,
   loading,
 }: UploadFormProps) {
@@ -36,6 +40,21 @@ export function UploadForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-8 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 rounded-3xl shadow-xl shadow-zinc-200/50 dark:shadow-none">
+      
+      <div>
+        <label className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-zinc-400">
+          <Sparkles size={14} /> AI Processing Model
+        </label>
+        <select 
+          value={modelTier}
+          onChange={(e) => setModelTier(e.target.value)}
+          className="w-full rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800 dark:bg-black focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm font-semibold cursor-pointer"
+        >
+          <option value="premium">Premium Engine (OpenAI GPT-4o)</option>
+          <option value="free">Free Engine (Groq Mixtral)</option>
+        </select>
+      </div>
+
       <div>
         <label className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-zinc-400">
           <FileText size={14} /> Job Description

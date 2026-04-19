@@ -6,10 +6,12 @@ import { UploadForm } from "@/components/UploadForm";
 import { ATSScore } from "@/components/ATSScore";
 import { KeywordTags } from "@/components/KeywordTags";
 import { Suggestions } from "@/components/Suggestions";
+import { Download } from "lucide-react";
 
 export default function Home() {
   const [jobDescription, setJobDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [modelTier, setModelTier] = useState("premium");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
@@ -24,10 +26,11 @@ export default function Home() {
     const formData = new FormData();
     formData.append("resume", file);
     formData.append("job_description", jobDescription);
+    formData.append("model_tier", modelTier);
 
     try {
-      // Connect to the FastAPI backend running locally
-      const res = await fetch("http://localhost:8000/ats-score", {
+      // Connect to the FastAPI backend running locally to score & generate PDF
+      const res = await fetch("http://localhost:8000/generate-resume", {
         method: "POST",
         body: formData,
       });
@@ -100,6 +103,8 @@ export default function Home() {
               setJobDescription={setJobDescription}
               file={file}
               setFile={setFile}
+              modelTier={modelTier}
+              setModelTier={setModelTier}
               onSubmit={handleSubmit}
               loading={loading}
             />
@@ -113,12 +118,23 @@ export default function Home() {
                   Based on your resume <strong>{file?.name}</strong>
                 </p>
               </div>
-              <button 
-                onClick={handleReset}
-                className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-zinc-600 hover:text-black dark:text-zinc-400 dark:hover:text-white transition-colors bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md"
-              >
-                <RefreshCw size={16} /> Re-analyze
-              </button>
+              <div className="flex items-center gap-3">
+                {result?.improved_resume_pdf && (
+                  <a 
+                    href={`http://localhost:8000${result.improved_resume_pdf}`}
+                    download
+                    className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-emerald-700 hover:text-emerald-900 transition-colors bg-emerald-50 border border-emerald-200 px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
+                  >
+                    <Download size={16} /> Download PDF
+                  </a>
+                )}
+                <button 
+                  onClick={handleReset}
+                  className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-zinc-600 hover:text-black dark:text-zinc-400 dark:hover:text-white transition-colors bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md"
+                >
+                  <RefreshCw size={16} /> Re-analyze
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

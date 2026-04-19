@@ -193,7 +193,8 @@ async def calculate_ats_score(
 @app.post("/generate-resume")
 async def generate_resume_endpoint(
     resume: UploadFile = File(...),
-    job_description: str = Form(...)
+    job_description: str = Form(...),
+    model_tier: str = Form("premium")
 ):
     """
     Parses the resume, runs ATS scoring, and returns a new AI-improved PDF and LaTeX code.
@@ -213,7 +214,7 @@ async def generate_resume_endpoint(
     missing_keywords = ats_result["missing_keywords"]
     
     # 3. Content Improvement
-    improved_content = generate_improved_content(extracted_text, missing_keywords, matched_keywords)
+    improved_content = await generate_improved_content(extracted_text, missing_keywords, matched_keywords, model_tier)
     
     # 4. Generate LaTeX
     latex_code = generate_latex(improved_content)
@@ -221,7 +222,7 @@ async def generate_resume_endpoint(
     # 5. Compile PDF
     pdf_path = compile_pdf(latex_code)
     
-    download_url = f"/download-pdf?path={pdf_path}" if pdf_path else ""
+    download_url = f"/download-resume?file_path={pdf_path}" if pdf_path else ""
     
     return {
         "ats_score": ats_result["ats_score"],
@@ -229,15 +230,15 @@ async def generate_resume_endpoint(
         "improved_resume_tex": latex_code
     }
 
-@app.get("/download-pdf")
-async def download_pdf(path: str):
+@app.get("/download-resume")
+async def download_resume(file_path: str):
     """Serves the generated PDF file."""
-    if not os.path.exists(path) or not path.endswith('.pdf'):
+    if not os.path.exists(file_path) or not file_path.endswith('.pdf'):
         raise HTTPException(status_code=404, detail="PDF not found or invalid.")
     
     # Extract filename from path to present to user
-    filename = os.path.basename(path)
-    return FileResponse(path, media_type="application/pdf", filename=filename)
+    filename = os.path.basename(file_path)
+    return FileResponse(file_path, media_type="application/pdf", filename=filename)
 
 if __name__ == "__main__":
     import uvicorn
